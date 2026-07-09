@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "LaunchMailer"
+version = "1.0.0"
+id = "artifacts/launchmailer"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23546
+
+[services.development]
+run = "pnpm --filter @workspace/launchmailer run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/launchmailer", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/launchmailer/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23546"
+BASE_PATH = "/"

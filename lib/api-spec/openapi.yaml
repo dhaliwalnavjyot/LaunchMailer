@@ -3,20 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LaunchMailer API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: dashboard
+    description: Dashboard statistics
+  - name: customers
+    description: Customer management
+  - name: campaigns
+    description: Campaign management
+  - name: upload
+    description: File uploads
+  - name: generate
+    description: AI content generation
+  - name: send
+    description: Send messages
+  - name: settings
+    description: Application settings
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +39,504 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current admin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current admin info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Admin"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/setup:
+    post:
+      operationId: setupAdmin
+      tags: [auth]
+      summary: Setup initial admin account (only works if no admin exists)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupAdminInput"
+      responses:
+        "201":
+          description: Admin created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Admin already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # ─── CUSTOMERS ───────────────────────────────────────────────────────────────
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search by name, email, phone, city, or tags
+        - name: hasEmail
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: hasPhone
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of tags to filter by
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerListResponse"
+
+  /customers/import:
+    post:
+      operationId: importCustomers
+      tags: [customers]
+      summary: Import customers from parsed CSV/Excel data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerImportInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  /customers/export:
+    get:
+      operationId: exportCustomers
+      tags: [customers]
+      summary: Export customers as CSV
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a single customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── CAMPAIGNS ───────────────────────────────────────────────────────────────
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      summary: List all campaigns
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      summary: Create a new campaign
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignInput"
+      responses:
+        "201":
+          description: Created campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  /campaigns/{id}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      summary: Get campaign details with logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Campaign with logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      summary: Delete a campaign
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── UPLOAD ─────────────────────────────────────────────────────────────────
+  /upload/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [upload]
+      summary: Request a presigned URL for image upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlInput"
+      responses:
+        "200":
+          description: Presigned URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+
+  # ─── AI GENERATE ─────────────────────────────────────────────────────────────
+  /generate:
+    post:
+      operationId: generateContent
+      tags: [generate]
+      summary: Generate email and WhatsApp content using AI
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateInput"
+      responses:
+        "200":
+          description: Generated content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedContent"
+        "500":
+          description: Generation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── SEND ────────────────────────────────────────────────────────────────────
+  /send/email:
+    post:
+      operationId: sendEmail
+      tags: [send]
+      summary: Send email campaign
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendEmailInput"
+      responses:
+        "200":
+          description: Send result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendResult"
+
+  /send/whatsapp:
+    post:
+      operationId: sendWhatsApp
+      tags: [send]
+      summary: Send WhatsApp campaign
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendWhatsAppInput"
+      responses:
+        "200":
+          description: Send result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendResult"
+
+  /send/retry/{campaignId}:
+    post:
+      operationId: retryCampaign
+      tags: [send]
+      summary: Retry failed sends for a campaign
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retry result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendResult"
+
+  # ─── SETTINGS ────────────────────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get current settings (without exposing secrets)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update settings / API keys
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +546,534 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: ["string", "null"]
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    # ─── AUTH ─────────────────────────────────────────────────────────────────
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+
+        password:
+          type: string
+          minLength: 1
+
+    SetupAdminInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+
+        password:
+          type: string
+          minLength: 8
+
+    Admin:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      required: [token, admin]
+      properties:
+        token:
+          type: string
+        admin:
+          $ref: "#/components/schemas/Admin"
+
+    # ─── DASHBOARD ────────────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required:
+        - totalCustomers
+        - customersWithEmail
+        - customersWithPhone
+        - totalCampaigns
+        - lastCampaign
+        - recentCampaigns
+        - recentUploads
+        - emailsSent
+        - whatsappSent
+      properties:
+        totalCustomers:
+          type: integer
+        customersWithEmail:
+          type: integer
+        customersWithPhone:
+          type: integer
+        totalCampaigns:
+          type: integer
+        emailsSent:
+          type: integer
+        whatsappSent:
+          type: integer
+        lastCampaign:
+          $ref: "#/components/schemas/CampaignSummary"
+        recentCampaigns:
+          type: array
+          items:
+            $ref: "#/components/schemas/CampaignSummary"
+        recentUploads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadRecord"
+
+    CampaignSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        method:
+          type: string
+          enum: [email, whatsapp, both]
+        status:
+          type: string
+          enum: [draft, sending, sent, failed]
+        recipientCount:
+          type: integer
+        emailSent:
+          type: integer
+        whatsappSent:
+          type: integer
+        successCount:
+          type: integer
+        failedCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: ["string", "null"]
+          format: date-time
+
+    UploadRecord:
+      type: object
+      required: [id, filename, recordCount, successCount, errorCount, createdAt]
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        recordCount:
+          type: integer
+        successCount:
+          type: integer
+        errorCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # ─── CUSTOMERS ────────────────────────────────────────────────────────────
+    Customer:
+      type: object
+      required: [id, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        firstName:
+          type: ["string", "null"]
+        lastName:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        unsubscribed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CustomerUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+
+        phone:
+          type: string
+        city:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+
+    CustomerImportInput:
+      type: object
+      required: [customers, updateExisting]
+      properties:
+        customers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerRow"
+        updateExisting:
+          type: boolean
+          description: Whether to update existing customers on email/phone match
+
+    CustomerRow:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        city:
+          type: string
+        tags:
+          type: string
+          description: Comma-separated list of tags
+        notes:
+          type: string
+
+    CustomerListResponse:
+      type: object
+      required: [customers, total, page, limit]
+      properties:
+        customers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ImportResult:
+      type: object
+      required: [created, updated, skipped, errors, uploadId]
+      properties:
+        created:
+          type: integer
+        updated:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportError"
+        uploadId:
+          type: string
+
+    ImportError:
+      type: object
+      required: [row, field, message]
+      properties:
+        row:
+          type: integer
+        field:
+          type: string
+        message:
+          type: string
+        value:
+          type: ["string", "null"]
+
+    # ─── CAMPAIGNS ────────────────────────────────────────────────────────────
+    Campaign:
+      type: object
+      required: [id, name, method, status, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        subject:
+          type: ["string", "null"]
+        emailContent:
+          type: ["string", "null"]
+        whatsappMessage:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        method:
+          type: string
+          enum: [email, whatsapp, both]
+        status:
+          type: string
+          enum: [draft, sending, sent, failed]
+        recipientCount:
+          type: integer
+        emailSent:
+          type: integer
+        whatsappSent:
+          type: integer
+        successCount:
+          type: integer
+        failedCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: ["string", "null"]
+          format: date-time
+
+    CampaignInput:
+      type: object
+      required: [name, method]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        subject:
+          type: string
+        emailContent:
+          type: string
+        whatsappMessage:
+          type: string
+        imageUrl:
+          type: string
+        method:
+          type: string
+          enum: [email, whatsapp, both]
+        recipientFilter:
+          $ref: "#/components/schemas/RecipientFilter"
+
+    RecipientFilter:
+      type: object
+      properties:
+        hasEmail:
+          type: boolean
+        hasPhone:
+          type: boolean
+        city:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    CampaignLog:
+      type: object
+      required: [id, channel, status, createdAt]
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        customerName:
+          type: ["string", "null"]
+        customerEmail:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        channel:
+          type: string
+          enum: [email, whatsapp]
+        status:
+          type: string
+          enum: [sent, delivered, failed, opened]
+        messageId:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CampaignDetail:
+      allOf:
+        - $ref: "#/components/schemas/Campaign"
+        - type: object
+          required: [logs]
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: "#/components/schemas/CampaignLog"
+
+    # ─── UPLOAD ───────────────────────────────────────────────────────────────
+    UploadUrlInput:
+      type: object
+      required: [filename, contentType]
+      properties:
+        filename:
+          type: string
+        contentType:
+          type: string
+          enum: [image/jpeg, image/jpg, image/png, image/webp]
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadUrl, publicUrl, objectKey]
+      properties:
+        uploadUrl:
+          type: string
+          description: Presigned PUT URL for uploading
+        publicUrl:
+          type: string
+          description: Public URL after upload
+        objectKey:
+          type: string
+
+    # ─── AI GENERATE ──────────────────────────────────────────────────────────
+    GenerateInput:
+      type: object
+      required: [brandName, productName, launchDate, tone, targetAudience]
+      properties:
+        brandName:
+          type: string
+          minLength: 1
+        productName:
+          type: string
+          minLength: 1
+        launchDate:
+          type: string
+          minLength: 1
+        tone:
+          type: string
+          enum: [professional, friendly, exciting, formal, casual]
+        targetAudience:
+          type: string
+          minLength: 1
+        additionalContext:
+          type: string
+
+    GeneratedContent:
+      type: object
+      required:
+        - emailSubject
+        - professionalEmail
+        - marketingEmail
+        - whatsappMessage
+        - callToAction
+      properties:
+        emailSubject:
+          type: string
+        professionalEmail:
+          type: string
+        marketingEmail:
+          type: string
+        whatsappMessage:
+          type: string
+        callToAction:
+          type: string
+
+    # ─── SEND ─────────────────────────────────────────────────────────────────
+    SendEmailInput:
+      type: object
+      required: [campaignId]
+      properties:
+        campaignId:
+          type: string
+
+    SendWhatsAppInput:
+      type: object
+      required: [campaignId]
+      properties:
+        campaignId:
+          type: string
+
+    SendResult:
+      type: object
+      required: [total, sent, failed]
+      properties:
+        total:
+          type: integer
+        sent:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+    # ─── SETTINGS ─────────────────────────────────────────────────────────────
+    Settings:
+      type: object
+      properties:
+        resendConfigured:
+          type: boolean
+        senderEmail:
+          type: ["string", "null"]
+        senderName:
+          type: ["string", "null"]
+        twilioConfigured:
+          type: boolean
+        twilioWhatsappNumber:
+          type: ["string", "null"]
+        claudeConfigured:
+          type: boolean
+        companyName:
+          type: ["string", "null"]
+        companyLogoUrl:
+          type: ["string", "null"]
+
+    SettingsUpdate:
+      type: object
+      properties:
+        resendApiKey:
+          type: string
+        senderEmail:
+          type: string
+        senderName:
+          type: string
+        twilioSid:
+          type: string
+        twilioAuthToken:
+          type: string
+        twilioWhatsappNumber:
+          type: string
+        claudeApiKey:
+          type: string
+        companyName:
+          type: string
+        companyLogoUrl:
+          type: string

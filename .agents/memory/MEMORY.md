@@ -1,0 +1,7 @@
+- [Express 5 params casting](express5-params.md) — req.params["id"] is string|string[] in @types/express v5; always cast with String(req.params["key"]).
+- [Drizzle lib/db rebuild](drizzle-lib-rebuild.md) — After adding schema tables, run `pnpm run typecheck:libs` to regenerate dist declarations before typechecking dependent packages.
+- [Express 5 wildcard routes](express5-wildcards.md) — Express 5 + path-to-regexp v8 requires named wildcards: use `/*splat` not `/*`.
+- [api-client-react deep imports](api-client-deep-imports.md) — Only `"."` is exported from @workspace/api-client-react; setBaseUrl, setAuthTokenGetter, ApiError, customFetch are all re-exported from the root entry. Never import from `/src/custom-fetch` directly.
+- [JWT startup guard pattern](jwt-startup-guard.md) — Always fail fast (process.exit in prod) when JWT_SECRET is missing/short; never silently fall back to a hardcoded default.
+- [Rate limiter trust proxy](rate-limiter-trust-proxy.md) — express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR unless `app.set("trust proxy", 1)` is set when behind a proxy (Replit is proxied).
+- [FormLabel outside FormField](form-label-context.md) — shadcn/ui FormLabel calls useFormField internally and throws if rendered outside a FormField context; use plain `<label>` for standalone labels.
