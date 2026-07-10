@@ -75,13 +75,7 @@ function Router() {
       <Route path="/login" component={Login} />
 
       {/* Root redirect */}
-      <Route path="/">
-        {() => {
-          const [, setLocation] = useLocation();
-          useEffect(() => { setLocation('/dashboard'); }, [setLocation]);
-          return null;
-        }}
-      </Route>
+      <Route path="/" component={RootRedirect} />
 
       {/* All protected routes — Route is a direct child of Switch so matching works correctly */}
       <Route path="/dashboard">
