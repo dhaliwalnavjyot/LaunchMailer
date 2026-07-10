@@ -42,9 +42,11 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component, path }: { component: any, path: string }) {
+// Auth guard — renders children only if logged in, otherwise redirects to /login.
+// Must be used *inside* a <Route> so Switch sees Route directly as its children.
+function AuthGuard({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  
+
   useEffect(() => {
     if (!getToken() && location !== '/login') {
       setLocation('/login');
@@ -54,11 +56,9 @@ function ProtectedRoute({ component: Component, path }: { component: any, path: 
   if (!getToken()) return null;
 
   return (
-    <Route path={path}>
-      <AppLayout>
-        <Component />
-      </AppLayout>
-    </Route>
+    <AppLayout>
+      {children}
+    </AppLayout>
   );
 }
 
@@ -66,7 +66,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      
+
       {/* Root redirect */}
       <Route path="/">
         {() => {
@@ -76,14 +76,29 @@ function Router() {
         }}
       </Route>
 
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/customers" component={Customers} />
-      <ProtectedRoute path="/customers/import" component={ImportCustomers} />
-      <ProtectedRoute path="/campaigns" component={Campaigns} />
-      <ProtectedRoute path="/campaigns/new" component={NewCampaign} />
-      <ProtectedRoute path="/campaigns/:id" component={CampaignDetail} />
-      <ProtectedRoute path="/settings" component={Settings} />
-      
+      {/* All protected routes — Route is a direct child of Switch so matching works correctly */}
+      <Route path="/dashboard">
+        <AuthGuard><Dashboard /></AuthGuard>
+      </Route>
+      <Route path="/customers/import">
+        <AuthGuard><ImportCustomers /></AuthGuard>
+      </Route>
+      <Route path="/customers">
+        <AuthGuard><Customers /></AuthGuard>
+      </Route>
+      <Route path="/campaigns/new">
+        <AuthGuard><NewCampaign /></AuthGuard>
+      </Route>
+      <Route path="/campaigns/:id">
+        <AuthGuard><CampaignDetail /></AuthGuard>
+      </Route>
+      <Route path="/campaigns">
+        <AuthGuard><Campaigns /></AuthGuard>
+      </Route>
+      <Route path="/settings">
+        <AuthGuard><Settings /></AuthGuard>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
