@@ -342,7 +342,7 @@ export default function NewCampaign() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <FormLabel>Header Image (Optional)</FormLabel>
+                      <label className="text-sm font-medium leading-none">Header Image (Optional)</label>
                       <div className="flex gap-2">
                         <Input 
                           placeholder="https://..." 
