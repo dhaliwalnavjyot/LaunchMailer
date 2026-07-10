@@ -42,6 +42,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Redirects / → /dashboard (must be a named component so hooks are tracked correctly).
+function RootRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => { setLocation('/dashboard'); }, [setLocation]);
+  return null;
+}
+
 // Auth guard — renders children only if logged in, otherwise redirects to /login.
 // Must be used *inside* a <Route> so Switch sees Route directly as its children.
 function AuthGuard({ children }: { children: React.ReactNode }) {
