@@ -160,6 +160,9 @@ importers:
       '@replit/connectors-sdk':
         specifier: ^0.4.1
         version: 0.4.1
+      node:
+        specifier: ^26.5.0
+        version: 26.5.0
     devDependencies:
       prettier:
         specifier: ^3.9.4
@@ -2825,6 +2828,9 @@ packages:
       react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
       react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
 
+  node-bin-setup@1.1.4:
+    resolution: {integrity: sha512-vWNHOne0ZUavArqPP5LJta50+S8R261Fr5SvGul37HbEDcowvLjwdvd0ZeSr0r2lTSrPxl6okq9QUw8BFGiAxA==}
+
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
@@ -2846,6 +2852,11 @@ packages:
   node-releases@2.0.50:
     resolution: {integrity: sha512-J6l92tKHX6w8Jy5nO1Vuc01NoIiRGi/d6qBKVxh+IQ8Cr3b6HbVNfKiF8ZpFKufTwpwxMmce2W3iQZ861ZRyTg==}
     engines: {node: '>=18'}
+
+  node@26.5.0:
+    resolution: {integrity: sha512-E9wHpJf86DE94L38B9i351DL4YPclYr7dn6h8OwqtVtnTctL+iw5REBKQ5nXmw4kDc8VlV2JReU7aLZCw2qL3g==}
+    engines: {npm: '>=5.0.0'}
+    hasBin: true
 
   npm-run-path@6.0.0:
     resolution: {integrity: sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA==}
@@ -5820,6 +5831,8 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
+  node-bin-setup@1.1.4: {}
+
   node-domexception@1.0.0: {}
 
   node-fetch@2.7.0:
@@ -5833,6 +5846,10 @@ snapshots:
       formdata-polyfill: 4.0.10
 
   node-releases@2.0.50: {}
+
+  node@26.5.0:
+    dependencies:
+      node-bin-setup: 1.1.4
 
   npm-run-path@6.0.0:
     dependencies:
